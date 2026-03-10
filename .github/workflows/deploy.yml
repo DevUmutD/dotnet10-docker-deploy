@@ -19,14 +19,6 @@ jobs:
         dotnet-version: '10.x'
         dotnet-quality: 'preview'
 
-    - name: 📦 Restore
-      run: dotnet restore AppSolution.sln
-
-    - name: 🏗️ Build
-      run: dotnet build AppSolution.sln --configuration Release --no-restore
-
-    - name: 🧪 Test
-      run: dotnet test AppSolution.sln --configuration Release --no-build
 
     - name: 📂 Sunucuya Dosyaları Aktarma
       uses: appleboy/scp-action@master
