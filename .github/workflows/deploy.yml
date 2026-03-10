@@ -44,5 +44,5 @@ jobs:
           echo "STUDENT_NAME=${{ secrets.STUDENT_NAME }}" >> .env
           
           # Eski container'ları durdur, yenisini build edip arka planda başlat
-          docker compose down
-          docker compose up -d --build
+          docker-compose down
+          docker-compose up -d --build
