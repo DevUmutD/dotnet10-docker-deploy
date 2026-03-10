@@ -1,0 +1,55 @@
+name: Deploy to Ubuntu VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Repository Checkout
+      uses: actions/checkout@v4
+
+    - name: 🛠️ Setup .NET 10
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: 📦 Restore
+      run: dotnet restore AppSolution.sln
+
+    - name: 🏗️ Build
+      run: dotnet build AppSolution.sln --configuration Release --no-restore
+
+    - name: 🧪 Test
+      run: dotnet test AppSolution.sln --configuration Release --no-build
+
+    - name: 📂 Sunucuya Dosyaları Aktarma
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        password: ${{ secrets.VPS_PASSWORD }}
+        source: "src,nginx,Dockerfile,compose.yml,.env.example"
+        target: ${{ secrets.DEPLOY_PATH }}
+
+    - name: 🚀 Docker Compose ile Deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        password: ${{ secrets.VPS_PASSWORD }}
+        script: |
+          cd ${{ secrets.DEPLOY_PATH }}
+          
+          # GitHub Secrets üzerinden .env dosyasını sunucuda güvenli şekilde oluştur
+          echo "APP_PORT=${{ secrets.APP_PORT }}" > .env
+          echo "ASPNETCORE_ENVIRONMENT=Production" >> .env
+          echo "STUDENT_NAME=${{ secrets.STUDENT_NAME }}" >> .env
+          
+          # Eski container'ları durdur, yenisini build edip arka planda başlat
+          docker compose down
+          docker compose up -d --build
